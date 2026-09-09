@@ -107,34 +107,23 @@ body {
     position: relative;
     transform: perspective(1400px) rotateX(0.8deg) rotateY(-0.8deg) translateZ(0);
     transition: transform 0.15s ease-out, box-shadow var(--transition-smooth), border-color var(--transition-smooth);
-    will-change: transform;
     opacity: 0;
-    animation: cardEnter 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    animation: cardEnter 0.5s ease forwards;
     animation-delay: calc(var(--card-i, 0) * 70ms);
 }
+/* Deliberately animates opacity only. A shared keyframe that also animates
+   `transform` would hard-code the perspective/rotate tilt into every frame,
+   which then keeps re-asserting itself over the mobile media query below
+   for as long as the animation's fill-mode holds — even with !important,
+   a running/held CSS animation still wins the cascade for the properties
+   it animates. Keeping `transform` out of the keyframes is what lets the
+   media query actually turn the tilt off on phones. */
 @keyframes cardEnter {
-    from { opacity: 0; transform: perspective(1400px) rotateX(0.8deg) rotateY(-0.8deg) translateY(22px) scale(0.97); }
-    to { opacity: 1; transform: perspective(1400px) rotateX(0.8deg) rotateY(-0.8deg) translateY(0) scale(1); }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
-.card-3d::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 1px;
-    background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple), var(--neon-pink), var(--neon-blue));
-    background-size: 300% 300%;
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    opacity: 0;
-    transition: opacity var(--transition-smooth);
-    pointer-events: none;
-    animation: borderFlow 6s linear infinite;
-}
-.card-3d:hover::before { opacity: 0.55; }
-@keyframes borderFlow { to { background-position: 300% 0; } }
 .card-3d:hover {
+    border-color: rgba(0, 212, 255, 0.25);
     box-shadow: 0 40px 80px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(0, 212, 255, 0.1), 0 0 50px rgba(0, 212, 255, 0.08);
 }
 
@@ -340,7 +329,6 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
     .card-3d, .aurora::before, .aurora::after, .particles span { animation: none !important; opacity: 1 !important; }
-    .card-3d::before { animation: none !important; }
 }
 
 @media (max-width: 768px) {
