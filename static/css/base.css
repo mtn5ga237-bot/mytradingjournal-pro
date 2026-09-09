@@ -187,6 +187,7 @@ body {
     -webkit-text-fill-color: transparent;
 }
 .stat-label { text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.65rem; color: var(--text-muted); font-weight: 600; }
+.stat-text { min-width: 0; }
 .icon-bg {
     width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center;
     font-size: 1.4rem; background: rgba(0, 212, 255, 0.06); border: 1px solid rgba(0, 212, 255, 0.08);
@@ -348,4 +349,10 @@ body {
     .navbar-custom .nav-link { font-size: 0.75rem; padding: 0.3rem 0.7rem; }
     .chart-container { height: 220px; }
     .calendar-cell { font-size: 0.6rem; border-radius: 8px; }
+    .icon-bg { width: 42px; height: 42px; font-size: 1.15rem; border-radius: 12px; }
+}
+
+@media (max-width: 400px) {
+    .stat-value { font-size: 1.35rem; }
+    .auth-card { max-width: 100%; }
 }

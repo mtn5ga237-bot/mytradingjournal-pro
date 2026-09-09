@@ -9,28 +9,28 @@
 </div>
 
 <div class="row g-4 mb-4">
-    <div class="col-6 col-lg-3">
+    <div class="col-12 col-sm-6 col-lg-3">
         <div class="glass card-3d p-4 text-center">
             <div class="stat-label mb-2">Espérance (R)</div>
             <h3 class="stat-value" style="font-size:1.8rem;">{{ rr.expectancy_r|floatformat:2 }}</h3>
             <small class="text-muted">sur {{ rr.rr_sample_size }} trade(s) avec SL</small>
         </div>
     </div>
-    <div class="col-6 col-lg-3">
+    <div class="col-12 col-sm-6 col-lg-3">
         <div class="glass card-3d p-4 text-center">
             <div class="stat-label mb-2">R:R moyen (gagnants)</div>
             <h3 class="stat-value" style="font-size:1.8rem;">{{ rr.avg_rr|floatformat:2 }}</h3>
             <small class="text-muted">multiple de risque</small>
         </div>
     </div>
-    <div class="col-6 col-lg-3">
+    <div class="col-12 col-sm-6 col-lg-3">
         <div class="glass card-3d p-4 text-center">
             <div class="stat-label mb-2">Trade moyen</div>
             <h3 class="stat-value" style="font-size:1.8rem;">{{ kpis.avg_trade|floatformat:2 }}</h3>
             <small class="text-muted">{{ user_settings.currency_symbol }} / trade</small>
         </div>
     </div>
-    <div class="col-6 col-lg-3">
+    <div class="col-12 col-sm-6 col-lg-3">
         <div class="glass card-3d p-4 text-center">
             <div class="stat-label mb-2">Total trades</div>
             <h3 class="stat-value" style="font-size:1.8rem;">{{ kpis.total_trades }}</h3>
@@ -49,7 +49,21 @@
     <div class="col-lg-6">
         <div class="glass card-3d p-4 h-100">
             <h6 class="text-secondary mb-3"><i class="bi bi-radar me-1"></i>Winrate par paire</h6>
-            <div class="chart-container"><canvas id="winratePairChart"></canvas></div>
+            {% if winrate_pairs|length >= 3 %}
+                <div class="chart-container"><canvas id="winratePairChart"></canvas></div>
+            {% elif winrate_pairs %}
+                <div class="d-flex flex-column gap-2">
+                    {% for p in winrate_pairs %}
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge-strategy">{{ p.pair }}</span>
+                            <span class="text-secondary small">{{ p.winrate }}% ({{ p.count }} trade{{ p.count|pluralize }})</span>
+                        </div>
+                    {% endfor %}
+                    <small class="text-muted mt-2">Le radar s'affiche à partir de 3 paires différentes.</small>
+                </div>
+            {% else %}
+                <p class="text-muted small mb-0">Pas encore de données.</p>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -89,10 +103,13 @@ new Chart(document.getElementById('monthlyChart'), {
     }]},
     options: { plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: 'rgba(255,255,255,0.04)' } } } }
 });
-new Chart(document.getElementById('winratePairChart'), {
-    type: 'radar',
-    data: { labels: {{ winrate_pair_labels|safe }}, datasets: [{ label: 'Winrate %', data: {{ winrate_pair_data|safe }}, borderColor: '#00d4ff', backgroundColor: 'rgba(0,212,255,0.15)', pointBackgroundColor: '#00d4ff' }]},
-    options: { scales: { r: { angleLines: { color: 'rgba(255,255,255,0.06)' }, grid: { color: 'rgba(255,255,255,0.06)' }, pointLabels: { color: '#94a3b8', font: { size: 10 } }, suggestedMin: 0, suggestedMax: 100 } }, plugins: { legend: { display: false } } }
-});
+const winratePairChartEl = document.getElementById('winratePairChart');
+if (winratePairChartEl) {
+    new Chart(winratePairChartEl, {
+        type: 'radar',
+        data: { labels: {{ winrate_pair_labels|safe }}, datasets: [{ label: 'Winrate %', data: {{ winrate_pair_data|safe }}, borderColor: '#00d4ff', backgroundColor: 'rgba(0,212,255,0.15)', pointBackgroundColor: '#00d4ff' }]},
+        options: { scales: { r: { angleLines: { color: 'rgba(255,255,255,0.06)' }, grid: { color: 'rgba(255,255,255,0.06)' }, pointLabels: { color: '#94a3b8', font: { size: 10 } }, suggestedMin: 0, suggestedMax: 100 } }, plugins: { legend: { display: false } } }
+    });
+}
 </script>
 {% endblock %}

@@ -32,6 +32,7 @@ def index(request):
         'pair_data': json.dumps([p['count'] for p in pairs]),
         'winrate_pair_labels': json.dumps([p['pair'] for p in winrate_pairs]),
         'winrate_pair_data': json.dumps([p['winrate'] for p in winrate_pairs]),
+        'winrate_pairs': winrate_pairs,
         'calendar': cal,
         'calendar_year': year,
         'calendar_month': month,
