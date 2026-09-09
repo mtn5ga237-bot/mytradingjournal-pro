@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% load journal_extras %}
+{% block title %}Tableau de bord — MyTradingJournal Pro{% endblock %}
+
+{% block content %}
+<div class="section-header d-flex justify-content-between align-items-end flex-wrap gap-2">
+    <div>
+        <h4 class="mb-1">Tableau de bord</h4>
+        <div class="sub">Vue d'ensemble de votre performance de trading</div>
+    </div>
+    <a href="{% url 'trades:create' %}" class="btn btn-primary-soft btn-3d"><i class="bi bi-plus-circle me-1"></i>Ajouter un trade</a>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="glass card-3d p-4 h-100">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div><div class="stat-label">Solde</div>
+                    <div class="stat-value" data-count-to="{{ kpis.balance|floatformat:2 }}" data-count-decimals="2" data-count-suffix=" {{ user_settings.currency_symbol }}">0 {{ user_settings.currency_symbol }}</div>
+                </div>
+                <div class="icon-bg"><i class="bi bi-wallet2"></i></div>
+            </div>
+            <small class="{% if kpis.balance_change_pct >= 0 %}text-success{% else %}text-danger{% endif %}">{{ kpis.balance_change_pct|pct }}</small>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="glass card-3d p-4 h-100">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div><div class="stat-label">Winrate</div>
+                    <div class="stat-value" data-count-to="{{ kpis.winrate|floatformat:1 }}" data-count-decimals="1" data-count-suffix="%">0%</div>
+                </div>
+                <div class="icon-bg"><i class="bi bi-bullseye"></i></div>
+            </div>
+            <div class="progress" style="height:5px;background:rgba(255,255,255,0.05);border-radius:6px;">
+                <div class="progress-bar" style="width:{{ kpis.winrate }}%;background:var(--neon-green);box-shadow:0 0 12px rgba(16,185,129,0.3);"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="glass card-3d p-4 h-100">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div><div class="stat-label">Profit Factor</div>
+                    <div class="stat-value">{% if kpis.gross_loss == 0 and kpis.gross_profit > 0 %}∞{% else %}{{ kpis.profit_factor|floatformat:2 }}{% endif %}</div>
+                </div>
+                <div class="icon-bg"><i class="bi bi-graph-up"></i></div>
+            </div>
+            <small class="text-muted">{{ kpis.total_trades }} trade(s)</small>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="glass card-3d p-4 h-100">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div><div class="stat-label">Drawdown Max</div>
+                    <div class="stat-value" style="-webkit-text-fill-color:var(--neon-red);">{{ kpis.max_drawdown_pct|floatformat:1 }}%</div>
+                </div>
+                <div class="icon-bg"><i class="bi bi-graph-down"></i></div>
+            </div>
+            <small class="text-muted">Depuis le plus haut</small>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="glass card-3d p-4 h-100">
+            <h6 class="text-secondary mb-3"><i class="bi bi-activity me-1"></i>Courbe d'équité</h6>
+            <div class="chart-container"><canvas id="equityChart"></canvas></div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="glass card-3d p-4 h-100">
+            <h6 class="text-secondary mb-3"><i class="bi bi-pie-chart me-1"></i>Répartition par paire</h6>
+            <div class="chart-container chart-container-sm"><canvas id="pairChart"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-7">
+        <div class="glass card-3d p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="text-secondary mb-0"><i class="bi bi-calendar3 me-1"></i>Calendrier de performance</h6>
+                <div class="d-flex align-items-center gap-2">
+                    <a class="btn btn-sm btn-outline-glass btn-3d" href="?year={{ calendar.prev.0 }}&month={{ calendar.prev.1 }}"><i class="bi bi-chevron-left"></i></a>
+                    <span class="month-year text-capitalize" style="min-width:130px;text-align:center;font-family:var(--font-display);">{{ calendar.month_date|date:"F Y" }}</span>
+                    <a class="btn btn-sm btn-outline-glass btn-3d" href="?year={{ calendar.next.0 }}&month={{ calendar.next.1 }}"><i class="bi bi-chevron-right"></i></a>
+                </div>
+            </div>
+            <div class="calendar-header">
+                {% for d in "LMMJVSD" %}<div class="day-name">{{ d }}</div>{% endfor %}
+            </div>
+            <div class="calendar-grid">
+                {% for week in calendar.weeks %}
+                    {% for day in week %}
+                        {% if day %}
+                            <div class="calendar-cell {% if day.has_trades %}{% if day.pnl > 0 %}gain{% elif day.pnl < 0 %}loss{% endif %}{% endif %}">
+                                <span>{{ day.day }}</span>
+                                {% if day.has_trades %}<span class="pnl-tag">{{ day.pnl|floatformat:0 }}</span>{% endif %}
+                            </div>
+                        {% else %}
+                            <div class="calendar-cell empty"></div>
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+            </div>
+            <div class="mt-2 text-muted small text-center">Total du mois : {{ calendar.month_total|money:user_settings.currency }}</div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="glass card-3d p-4 h-100">
+            <h6 class="text-secondary mb-3"><i class="bi bi-radar me-1"></i>Winrate par paire</h6>
+            <div class="chart-container chart-container-sm"><canvas id="winrateRadar"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<div class="glass card-3d p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="text-secondary mb-0"><i class="bi bi-list-ul me-1"></i>Derniers trades</h6>
+        <a href="{% url 'trades:list' %}" class="small text-decoration-none" style="color:var(--neon-blue);">Voir tout →</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-custom mb-0">
+            <thead><tr><th>Date</th><th>Paire</th><th>Direction</th><th>Résultat</th><th>Stratégie</th></tr></thead>
+            <tbody>
+            {% for t in last_trades %}
+                <tr>
+                    <td>{{ t.date_ouverture|date:"d/m/y H:i" }}</td>
+                    <td>{{ t.paire }}</td>
+                    <td><span class="badge {% if t.direction == 'achat' %}badge-gain{% else %}badge-loss{% endif %}">{{ t.get_direction_display }}</span></td>
+                    <td class="{% if t.is_win %}text-success{% else %}text-danger{% endif %}">{{ t.net_result|money:user_settings.currency }}</td>
+                    <td><span class="badge-strategy">{{ t.strategie }}</span></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5" class="text-center text-muted py-4">Aucun trade pour l'instant. <a href="{% url 'trades:create' %}" style="color:var(--neon-blue);">Ajoutez-en un</a>.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const equityLabels = {{ equity_labels|safe }};
+const equityData = {{ equity_data|safe }};
+const pairLabels = {{ pair_labels|safe }};
+const pairData = {{ pair_data|safe }};
+const winrateLabels = {{ winrate_pair_labels|safe }};
+const winrateData = {{ winrate_pair_data|safe }};
+
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.font.family = "'Inter', sans-serif";
+
+new Chart(document.getElementById('equityChart'), {
+    type: 'line',
+    data: { labels: equityLabels, datasets: [{
+        label: 'Solde', data: equityData, borderColor: '#00d4ff', backgroundColor: 'rgba(0,212,255,0.08)',
+        fill: true, tension: 0.35, pointRadius: 0, borderWidth: 2,
+    }]},
+    options: { plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(255,255,255,0.04)' } }, y: { grid: { color: 'rgba(255,255,255,0.04)' } } } }
+});
+
+new Chart(document.getElementById('pairChart'), {
+    type: 'doughnut',
+    data: { labels: pairLabels, datasets: [{ data: pairData, backgroundColor: ['#00d4ff','#7c3aed','#ec4899','#10b981','#fbbf24','#f43f5e','#38bdf8','#a78bfa'] }]},
+    options: { plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } } }
+});
+
+new Chart(document.getElementById('winrateRadar'), {
+    type: 'radar',
+    data: { labels: winrateLabels, datasets: [{ label: 'Winrate %', data: winrateData, borderColor: '#7c3aed', backgroundColor: 'rgba(124,58,237,0.15)', pointBackgroundColor: '#7c3aed' }]},
+    options: { scales: { r: { angleLines: { color: 'rgba(255,255,255,0.06)' }, grid: { color: 'rgba(255,255,255,0.06)' }, pointLabels: { color: '#94a3b8', font: { size: 10 } }, suggestedMin: 0, suggestedMax: 100 } }, plugins: { legend: { display: false } } }
+});
+</script>
+{% endblock %}

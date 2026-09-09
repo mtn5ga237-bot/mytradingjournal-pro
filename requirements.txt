@@ -1,0 +1,13 @@
+Django>=6.0,<6.1
+Pillow>=11.0
+
+# Production server + static file serving (used by the Procfile; harmless
+# to have installed locally too).
+gunicorn>=23.0
+whitenoise>=6.7
+dj-database-url>=2.2
+
+# Optional: powers the extra ML layer in the AI Coach (logistic regression
+# feature-importance) once a user has 30+ trades. The coach works fine
+# without it — it just falls back to pure rule-based statistics.
+scikit-learn>=1.5

@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Connexion — MyTradingJournal Pro{% endblock %}
+{% block content %}
+<div class="auth-wrapper">
+    <div class="glass card-3d p-4 p-md-5 auth-card">
+        <div class="text-center mb-4">
+            <i class="bi bi-graph-up-arrow" style="font-size:2rem;color:var(--neon-blue);"></i>
+            <h4 class="text-gradient mt-2">MyTradingJournal Pro</h4>
+            <p class="text-muted small">Connectez-vous à votre journal</p>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="mb-3">
+                    <label class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors|striptags }}</div>{% endif %}
+                </div>
+            {% endfor %}
+            {% if form.non_field_errors %}<div class="text-danger small mb-3">{{ form.non_field_errors|striptags }}</div>{% endif %}
+            <button type="submit" class="btn btn-primary-soft btn-3d w-100">Connexion</button>
+        </form>
+        <div class="text-center mt-3 small text-muted">
+            <a href="{% url 'accounts:password_reset' %}" class="text-decoration-none" style="color:var(--neon-blue);">Mot de passe oublié ?</a>
+        </div>
+        <div class="text-center mt-2 small text-muted">
+            Pas de compte ? <a href="{% url 'accounts:signup' %}" class="text-decoration-none" style="color:var(--neon-blue);">Inscrivez-vous</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

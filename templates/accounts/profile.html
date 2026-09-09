@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Profil — MyTradingJournal Pro{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="glass card-3d p-4">
+            <h5 class="mb-3">Profil</h5>
+            <p><strong>Utilisateur :</strong> {{ user.username }}</p>
+            <p><strong>Email :</strong> {{ user.email }}</p>
+            <p><strong>Membre depuis :</strong> {{ user.date_joined|date:"d/m/Y" }}</p>
+            <a href="{% url 'core:settings' %}" class="btn btn-outline-glass btn-3d">Paramètres du journal</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

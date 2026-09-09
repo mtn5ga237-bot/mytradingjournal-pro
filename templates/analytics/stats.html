@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load journal_extras %}
+{% block title %}Analyses — MyTradingJournal Pro{% endblock %}
+
+{% block content %}
+<div class="section-header">
+    <h4 class="mb-1">Analyses avancées</h4>
+    <div class="sub">Espérance, R:R et performance par stratégie</div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="glass card-3d p-4 text-center">
+            <div class="stat-label mb-2">Espérance (R)</div>
+            <h3 class="stat-value" style="font-size:1.8rem;">{{ rr.expectancy_r|floatformat:2 }}</h3>
+            <small class="text-muted">sur {{ rr.rr_sample_size }} trade(s) avec SL</small>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="glass card-3d p-4 text-center">
+            <div class="stat-label mb-2">R:R moyen (gagnants)</div>
+            <h3 class="stat-value" style="font-size:1.8rem;">{{ rr.avg_rr|floatformat:2 }}</h3>
+            <small class="text-muted">multiple de risque</small>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="glass card-3d p-4 text-center">
+            <div class="stat-label mb-2">Trade moyen</div>
+            <h3 class="stat-value" style="font-size:1.8rem;">{{ kpis.avg_trade|floatformat:2 }}</h3>
+            <small class="text-muted">{{ user_settings.currency_symbol }} / trade</small>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="glass card-3d p-4 text-center">
+            <div class="stat-label mb-2">Total trades</div>
+            <h3 class="stat-value" style="font-size:1.8rem;">{{ kpis.total_trades }}</h3>
+            <small class="text-muted">{{ kpis.wins }}G / {{ kpis.losses }}P</small>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="glass card-3d p-4 h-100">
+            <h6 class="text-secondary mb-3"><i class="bi bi-bar-chart me-1"></i>Performance mensuelle</h6>
+            <div class="chart-container"><canvas id="monthlyChart"></canvas></div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="glass card-3d p-4 h-100">
+            <h6 class="text-secondary mb-3"><i class="bi bi-radar me-1"></i>Winrate par paire</h6>
+            <div class="chart-container"><canvas id="winratePairChart"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<div class="glass card-3d p-4">
+    <h6 class="text-secondary mb-3"><i class="bi bi-table me-1"></i>Performance par stratégie</h6>
+    <div class="table-responsive">
+        <table class="table table-custom mb-0">
+            <thead><tr><th>Stratégie</th><th>Trades</th><th>Winrate</th><th>P&L total</th><th>P&L moyen</th></tr></thead>
+            <tbody>
+            {% for s in strategies %}
+                <tr>
+                    <td><span class="badge-strategy">{{ s.strategie }}</span></td>
+                    <td>{{ s.count }}</td>
+                    <td>{{ s.winrate }}%</td>
+                    <td class="{% if s.total_pnl >= 0 %}text-success{% else %}text-danger{% endif %}">{{ s.total_pnl|money:user_settings.currency }}</td>
+                    <td class="{% if s.avg_pnl >= 0 %}text-success{% else %}text-danger{% endif %}">{{ s.avg_pnl|money:user_settings.currency }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5" class="text-center text-muted py-4">Aucune donnée pour l'instant.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+Chart.defaults.color = '#94a3b8';
+new Chart(document.getElementById('monthlyChart'), {
+    type: 'bar',
+    data: { labels: {{ monthly_labels|safe }}, datasets: [{
+        label: 'P&L', data: {{ monthly_data|safe }},
+        backgroundColor: ({{ monthly_data|safe }}).map(v => v >= 0 ? 'rgba(16,185,129,0.6)' : 'rgba(244,63,94,0.6)'),
+        borderRadius: 6,
+    }]},
+    options: { plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: 'rgba(255,255,255,0.04)' } } } }
+});
+new Chart(document.getElementById('winratePairChart'), {
+    type: 'radar',
+    data: { labels: {{ winrate_pair_labels|safe }}, datasets: [{ label: 'Winrate %', data: {{ winrate_pair_data|safe }}, borderColor: '#00d4ff', backgroundColor: 'rgba(0,212,255,0.15)', pointBackgroundColor: '#00d4ff' }]},
+    options: { scales: { r: { angleLines: { color: 'rgba(255,255,255,0.06)' }, grid: { color: 'rgba(255,255,255,0.06)' }, pointLabels: { color: '#94a3b8', font: { size: 10 } }, suggestedMin: 0, suggestedMax: 100 } }, plugins: { legend: { display: false } } }
+});
+</script>
+{% endblock %}

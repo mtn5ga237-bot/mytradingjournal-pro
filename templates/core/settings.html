@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Paramètres — MyTradingJournal Pro{% endblock %}
+
+{% block content %}
+<div class="section-header">
+    <h4 class="mb-1">Paramètres</h4>
+    <div class="sub">Devise et solde initial</div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="glass card-3d p-4">
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label">Devise préférée</label>
+                    {{ form.currency }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Solde initial</label>
+                    {{ form.initial_balance }}
+                </div>
+                <button type="submit" class="btn btn-primary-soft btn-3d"><i class="bi bi-check-circle me-1"></i>Enregistrer</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load journal_extras %}
+{% block title %}Historique — MyTradingJournal Pro{% endblock %}
+
+{% block content %}
+<div class="section-header d-flex justify-content-between align-items-end flex-wrap gap-2">
+    <div>
+        <h4 class="mb-1">Historique des trades</h4>
+        <div class="sub">{{ page_obj.paginator.count }} trade(s) au total</div>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'trades:export_csv' %}" class="btn btn-outline-glass btn-3d"><i class="bi bi-download me-1"></i>Export CSV</a>
+        <a href="{% url 'trades:create' %}" class="btn btn-primary-soft btn-3d"><i class="bi bi-plus-circle me-1"></i>Ajouter</a>
+    </div>
+</div>
+
+<div class="glass card-3d p-4 mb-4">
+    <form method="get" class="row g-3">
+        <div class="col-md-6"><input type="text" name="q" value="{{ q }}" class="form-control" placeholder="🔍 Rechercher (paire, stratégie, commentaire)…" /></div>
+        <div class="col-md-3">
+            <select name="result" class="form-select">
+                <option value="" {% if result == '' %}selected{% endif %}>Tous résultats</option>
+                <option value="gain" {% if result == 'gain' %}selected{% endif %}>Gagnants</option>
+                <option value="loss" {% if result == 'loss' %}selected{% endif %}>Perdants</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="pair" class="form-select">
+                <option value="">Toutes paires</option>
+                {% for value, label in pairs %}
+                    <option value="{{ value }}" {% if pair == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-1"><button class="btn btn-primary-soft btn-3d w-100" type="submit"><i class="bi bi-funnel"></i></button></div>
+    </form>
+</div>
+
+<div class="glass card-3d p-4">
+    <div class="table-responsive">
+        <table class="table table-custom mb-0">
+            <thead>
+            <tr><th>Date</th><th>Paire</th><th>Dir.</th><th>Résultat</th><th>Pips</th><th>Stratégie</th><th>Session</th><th>Plan</th><th></th></tr>
+            </thead>
+            <tbody>
+            {% for t in trades %}
+                <tr>
+                    <td>{{ t.date_ouverture|date:"d/m/y H:i" }}</td>
+                    <td>{{ t.paire }}</td>
+                    <td><span class="badge {% if t.direction == 'achat' %}badge-gain{% else %}badge-loss{% endif %}">{{ t.get_direction_display }}</span></td>
+                    <td class="{% if t.is_win %}text-success{% else %}text-danger{% endif %}">{{ t.net_result|money:user_settings.currency }}</td>
+                    <td>{{ t.resultat_pips }}</td>
+                    <td><span class="badge-strategy">{{ t.strategie }}</span></td>
+                    <td class="text-muted small">{{ t.session }}</td>
+                    <td>{% if t.respect_plan %}<i class="bi bi-check-circle text-success"></i>{% else %}<i class="bi bi-x-circle text-danger"></i>{% endif %}</td>
+                    <td class="text-end">
+                        <a href="{% url 'trades:update' t.pk %}" class="btn btn-sm btn-outline-glass"><i class="bi bi-pencil"></i></a>
+                        <a href="{% url 'trades:delete' t.pk %}" class="btn btn-sm btn-outline-glass text-danger"><i class="bi bi-trash"></i></a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="9" class="text-center text-muted py-4">Aucun trade trouvé.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if is_paginated %}
+    <nav class="mt-3">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" style="background:transparent;border-color:rgba(255,255,255,0.08);color:#fff;" href="?page={{ page_obj.previous_page_number }}&q={{ q }}&result={{ result }}&pair={{ pair }}">‹</a></li>
+            {% endif %}
+            <li class="page-item"><span class="page-link" style="background:transparent;border-color:rgba(255,255,255,0.08);color:#94a3b8;">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+            {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" style="background:transparent;border-color:rgba(255,255,255,0.08);color:#fff;" href="?page={{ page_obj.next_page_number }}&q={{ q }}&result={{ result }}&pair={{ pair }}">›</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

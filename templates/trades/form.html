@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}{% if object %}Modifier{% else %}Ajouter{% endif %} un trade — MyTradingJournal Pro{% endblock %}
+
+{% block content %}
+<div class="section-header">
+    <h4 class="mb-1">{% if object %}Modifier le trade{% else %}Ajouter un trade{% endif %}</h4>
+    <div class="sub">Renseignez les détails de votre trade</div>
+</div>
+
+<div class="glass card-3d p-4">
+    <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        <div class="row g-4">
+            {% for field in form %}
+                <div class="col-md-{% if field.name == 'commentaires' or field.name == 'screenshot' %}12{% else %}4{% endif %}">
+                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+                    {% if field.name == 'screenshot' and object and object.screenshot %}
+                        <div class="mb-2">
+                            <div class="screenshot-preview"><img src="{{ object.screenshot.url }}" alt="Capture actuelle" /></div>
+                        </div>
+                    {% endif %}
+                    {% if field.name == 'screenshot' %}
+                        <div class="drop-zone">
+                            <i class="bi bi-cloud-upload drop-icon d-block mb-2"></i>
+                            {{ field }}
+                        </div>
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
+                    {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors|striptags }}</div>{% endif %}
+                    {% if field.help_text %}<div class="text-muted small mt-1">{{ field.help_text }}</div>{% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        {% if form.non_field_errors %}<div class="text-danger small mt-3">{{ form.non_field_errors }}</div>{% endif %}
+        <div class="mt-4 d-flex gap-2">
+            <button type="submit" class="btn btn-primary-soft btn-3d"><i class="bi bi-check-circle me-1"></i>Enregistrer</button>
+            <a href="{% url 'trades:list' %}" class="btn btn-outline-glass btn-3d">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
