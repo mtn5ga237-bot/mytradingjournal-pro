@@ -152,8 +152,14 @@ MAX_SCREENSHOT_SIZE = 5 * 1024 * 1024
 
 # Harden automatically once DEBUG is off (i.e. DJANGO_DEBUG=False in the
 # deployment's environment variables) — nothing to remember to flip by hand.
+#
+# SECURE_SSL_REDIRECT is deliberately left off: it redirects any request
+# Django itself doesn't see as HTTPS (via SECURE_PROXY_SSL_HEADER) to
+# https://<same URL>. On a reverse proxy that doesn't consistently forward
+# X-Forwarded-Proto, that redirect target looks exactly like the original
+# request, and the browser loops forever. The proxy in front of this app
+# already terminates TLS, so Django doesn't need to redirect for it.
 if not DEBUG:
-    SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_HSTS_SECONDS = 60 * 60 * 24 * 7
