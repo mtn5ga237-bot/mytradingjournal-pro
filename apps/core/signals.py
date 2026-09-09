@@ -23,12 +23,37 @@ def create_default_admin(sender, **kwargs):
     """Ensure a superuser always exists so the app is usable right after
     `migrate`, without a manual `createsuperuser` step. Only fires for this
     app's own migration pass, and only creates an account if none exists —
-    it never touches or resets an existing superuser's password."""
+    it never touches or resets an existing superuser's password.
+
+    Escape hatch: if DJANGO_ADMIN_RESET_PASSWORD is set, force-reset
+    DEFAULT_ADMIN_USERNAME's password to it even when that account already
+    exists. This is for recovering access to a deployment whose admin
+    password was lost/forgotten — unset the env var again afterwards so a
+    later redeploy can't silently reset a password you've since changed."""
     if sender.name != 'apps.core':
         return
 
     User = get_user_model()
+    reset_password = os.environ.get('DJANGO_ADMIN_RESET_PASSWORD')
+
     if User.objects.filter(is_superuser=True).exists():
+        if reset_password:
+            user, _ = User.objects.get_or_create(
+                username=DEFAULT_ADMIN_USERNAME,
+                defaults={'email': DEFAULT_ADMIN_EMAIL, 'is_staff': True, 'is_superuser': True},
+            )
+            user.is_staff = True
+            user.is_superuser = True
+            user.set_password(reset_password)
+            user.save()
+            print(
+                "\n"
+                "==================== MOT DE PASSE ADMIN REINITIALISE ====================\n"
+                f"  Identifiant : {DEFAULT_ADMIN_USERNAME}\n"
+                f"  Nouveau mot de passe : {reset_password}\n"
+                "  -> Retirez DJANGO_ADMIN_RESET_PASSWORD une fois connecte.\n"
+                "===========================================================================\n"
+            )
         return
 
     User.objects.create_superuser(
